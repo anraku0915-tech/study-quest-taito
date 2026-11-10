@@ -1,0 +1,1359 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Study Quest for TAITO | たいと君の まなびクエスト</title>
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Google Fonts: Zen Maru Gothic for warm, friendly Japanese round text -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Zen+Maru+Gothic:wght@400;700;900&display=swap" rel="stylesheet">
+  <!-- FontAwesome for icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <!-- Canvas Confetti for celebrations -->
+  <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            maru: ['"Zen Maru Gothic"', 'sans-serif'],
+          },
+          colors: {
+            questYellow: '#FFD166',
+            questCoral: '#FF6B6B',
+            questTeal: '#4ECDC4',
+            questBlue: '#1A535C',
+            questPurple: '#A29BFE',
+            questCream: '#FFFDF9',
+          },
+          boxShadow: {
+            'pop': '0 8px 0px rgba(0,0,0,0.1)',
+            'pop-sm': '0 4px 0px rgba(0,0,0,0.1)',
+            'pop-btn': '0 6px 0px rgba(0,0,0,0.15)',
+            'pop-btn-active': '0 1px 0px rgba(0,0,0,0.15)',
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    body {
+      font-family: 'Zen Maru Gothic', sans-serif;
+      background: radial-gradient(circle at 15% 20%, #FFF5EB 0%, #EBF8FF 50%, #F5F3FF 100%);
+      min-height: 100vh;
+      -webkit-tap-highlight-color: transparent;
+    }
+    .btn-3d {
+      transition: all 0.1s ease;
+    }
+    .btn-3d:active {
+      transform: translateY(4px);
+    }
+    /* Floating gentle bounce animation */
+    @keyframes gentle-bounce {
+      0%, 100% { transform: translateY(0); }
+      50% { transform: translateY(-6px); }
+    }
+    .animate-float {
+      animation: gentle-bounce 3s ease-in-out infinite;
+    }
+    /* Custom scrollbar */
+    ::-webkit-scrollbar {
+      width: 8px;
+      height: 8px;
+    }
+    ::-webkit-scrollbar-thumb {
+      background: #CBD5E1;
+      border-radius: 9999px;
+    }
+  </style>
+</head>
+<body class="text-slate-700 antialiased selection:bg-amber-200">
+
+  <!-- TOP HEADER & STATUS BAR -->
+  <header class="sticky top-0 z-40 bg-white/90 backdrop-blur-md border-b-4 border-amber-200 px-4 py-3 shadow-sm">
+    <div class="max-w-5xl mx-auto flex flex-wrap items-center justify-between gap-3">
+      <!-- Title & Mascot -->
+      <div class="flex items-center gap-2 cursor-pointer" onclick="switchTab('tasks')">
+        <span class="text-3xl animate-float">🚀</span>
+        <div>
+          <h1 class="text-xl md:text-2xl font-black text-amber-500 tracking-wide flex items-center gap-1.5">
+            Study Quest
+            <span class="text-xs bg-gradient-to-r from-amber-400 to-orange-400 text-white font-black px-2.5 py-0.5 rounded-full shadow-sm">for TAITO</span>
+          </h1>
+          <p class="text-[11px] text-slate-500 font-bold hidden sm:block">たいと君のレベルアップ大作戦！</p>
+        </div>
+      </div>
+
+      <!-- Streak & Star Wallet & Parent Switch -->
+      <div class="flex items-center gap-2 md:gap-4">
+        <!-- Streak badge -->
+        <div class="flex items-center gap-1.5 bg-orange-100 text-orange-700 px-3 py-1.5 rounded-2xl border-2 border-orange-300 font-bold text-sm shadow-sm" title="連続で勉強した日数">
+          <i class="fa-solid fa-fire text-orange-500 text-base animate-pulse"></i>
+          <span><span id="headerStreakCount" class="text-lg font-black">0</span>日 れんぞく!</span>
+        </div>
+
+        <!-- Star wallet -->
+        <div class="flex items-center gap-2 bg-amber-100 text-amber-800 px-4 py-1.5 rounded-2xl border-2 border-amber-300 font-black shadow-sm" title="あつめたスター">
+          <i class="fa-solid fa-star text-amber-400 text-lg drop-shadow"></i>
+          <span id="headerStarCount" class="text-xl font-black text-amber-600">0</span>
+          <span class="text-xs font-bold text-amber-700">こ</span>
+        </div>
+
+        <!-- Parent Mode Toggle Button -->
+        <button onclick="toggleParentModeModal()" class="flex items-center gap-1.5 bg-slate-100 hover:bg-slate-200 text-slate-600 px-3 py-1.5 rounded-2xl border-2 border-slate-300 font-bold text-xs md:text-sm btn-3d shadow-pop-sm">
+          <i class="fa-solid fa-user-shield text-slate-500"></i>
+          <span id="parentModeBtnText">保護者</span>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- MAIN CONTAINER -->
+  <main class="max-w-5xl mx-auto px-4 py-5 mb-24 md:mb-12">
+    <!-- NAVIGATION TABS -->
+    <nav class="flex items-center justify-between md:justify-center gap-2 mb-6 bg-white/70 p-2 rounded-3xl border-2 border-slate-200 shadow-sm overflow-x-auto">
+      <button onclick="switchTab('tasks')" id="tabBtn-tasks" class="tab-btn flex-1 md:flex-none flex items-center justify-center gap-2 py-2.5 px-5 rounded-2xl font-black text-sm transition-all bg-amber-400 text-slate-900 shadow-pop-btn">
+        <i class="fa-solid fa-list-check text-lg"></i>
+        <span>きょうのやること</span>
+      </button>
+
+      <button onclick="switchTab('timer')" id="tabBtn-timer" class="tab-btn flex-1 md:flex-none flex items-center justify-center gap-2 py-2.5 px-5 rounded-2xl font-black text-sm transition-all text-slate-600 hover:bg-white">
+        <i class="fa-solid fa-stopwatch text-lg text-emerald-500"></i>
+        <span>タイマー</span>
+      </button>
+
+      <button onclick="switchTab('rewards')" id="tabBtn-rewards" class="tab-btn flex-1 md:flex-none flex items-center justify-center gap-2 py-2.5 px-5 rounded-2xl font-black text-sm transition-all text-slate-600 hover:bg-white">
+        <i class="fa-solid fa-gift text-lg text-pink-500"></i>
+        <span>ごほうび</span>
+      </button>
+
+      <button onclick="switchTab('stats')" id="tabBtn-stats" class="tab-btn flex-1 md:flex-none flex items-center justify-center gap-2 py-2.5 px-5 rounded-2xl font-black text-sm transition-all text-slate-600 hover:bg-white">
+        <i class="fa-solid fa-chart-line text-lg text-indigo-500"></i>
+        <span>がんばりグラフ</span>
+      </button>
+    </nav>
+
+    <!-- ===================== SECTION 1: TODAY'S TASKS ===================== -->
+    <section id="section-tasks" class="tab-section block space-y-5">
+      <!-- Date Banner & Encouragement -->
+      <div class="bg-gradient-to-r from-amber-200 via-orange-100 to-yellow-100 rounded-3xl p-5 border-4 border-amber-300 shadow-pop relative overflow-hidden">
+        <div class="relative z-10 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+          <div>
+            <div class="flex items-center gap-2 text-amber-800 font-black text-lg md:text-xl">
+              <i class="fa-regular fa-calendar-check text-amber-600"></i>
+              <span id="todayDateStr">2026年 4月1日 (水)</span>
+            </div>
+            <p id="motivationalMessage" class="text-sm md:text-base font-bold text-amber-900 mt-1">
+              ✨ 今日も一歩ずつ！すてきな冒険をはじめよう！
+            </p>
+          </div>
+          <!-- Progress mini card -->
+          <div class="bg-white/90 backdrop-blur px-5 py-3 rounded-2xl border-2 border-amber-300 shadow-sm flex items-center gap-4">
+            <div class="text-right">
+              <p class="text-xs font-bold text-slate-500">今日の達成</p>
+              <p class="text-lg font-black text-amber-600"><span id="taskProgressPercent">0</span>%</p>
+            </div>
+            <div class="w-16 h-16 relative flex items-center justify-center">
+              <svg class="w-full h-full transform -rotate-90" viewBox="0 0 36 36">
+                <path class="text-slate-100" stroke-width="4" stroke="currentColor" fill="none"
+                      d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
+                <path id="progressCirclePath" class="text-amber-400 transition-all duration-500" stroke-width="4" stroke-dasharray="0, 100" stroke-linecap="round" stroke="currentColor" fill="none"
+                      d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
+              </svg>
+              <span id="taskFraction" class="absolute text-xs font-black text-slate-700">0/0</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Task Action Controls -->
+      <div class="flex items-center justify-between px-1">
+        <h2 class="text-xl font-black text-slate-800 flex items-center gap-2">
+          <span>📚 きょうのミッション</span>
+        </h2>
+        <button onclick="openAddTaskModal()" class="btn-3d bg-amber-400 hover:bg-amber-500 text-slate-900 font-black text-sm px-4 py-2 rounded-2xl border-2 border-amber-500 shadow-pop-btn flex items-center gap-2">
+          <i class="fa-solid fa-plus-circle text-base"></i>
+          <span>ミッションを追加</span>
+        </button>
+      </div>
+
+      <!-- Task List Container -->
+      <div id="taskListContainer" class="space-y-3">
+        <!-- Dynamically injected tasks -->
+      </div>
+    </section>
+
+    <!-- ===================== SECTION 2: STUDY TIMER ===================== -->
+    <section id="section-timer" class="tab-section hidden space-y-6">
+      <div class="bg-white rounded-3xl p-6 md:p-8 border-4 border-emerald-200 shadow-pop text-center relative overflow-hidden max-w-xl mx-auto">
+        <!-- Background accents -->
+        <div class="absolute -top-12 -right-12 w-32 h-32 bg-emerald-100 rounded-full blur-xl opacity-60"></div>
+        <div class="absolute -bottom-12 -left-12 w-32 h-32 bg-teal-100 rounded-full blur-xl opacity-60"></div>
+
+        <!-- Target task selector -->
+        <div class="mb-5 relative z-10 text-left">
+          <label class="block text-xs font-black text-emerald-800 mb-1 ml-1">いまから勉強するミッションを選ぶ：</label>
+          <div class="relative">
+            <select id="timerTaskSelect" class="w-full bg-emerald-50 border-2 border-emerald-300 text-slate-800 font-bold rounded-2xl py-2.5 px-4 appearance-none focus:outline-none focus:ring-2 focus:ring-emerald-400">
+              <option value="">フリー学習（じゆうに勉強）</option>
+            </select>
+            <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-4 text-emerald-600">
+              <i class="fa-solid fa-chevron-down"></i>
+            </div>
+          </div>
+        </div>
+
+        <!-- Preset buttons -->
+        <div class="flex items-center justify-center gap-2 mb-6 flex-wrap relative z-10">
+          <button onclick="setTimerPreset(10)" class="preset-btn px-4 py-1.5 rounded-full font-black text-xs md:text-sm bg-emerald-100 hover:bg-emerald-200 text-emerald-800 border border-emerald-300">10分</button>
+          <button onclick="setTimerPreset(15)" class="preset-btn px-4 py-1.5 rounded-full font-black text-xs md:text-sm bg-emerald-100 hover:bg-emerald-200 text-emerald-800 border border-emerald-300">15分</button>
+          <button onclick="setTimerPreset(25)" class="preset-btn active px-4 py-1.5 rounded-full font-black text-xs md:text-sm bg-emerald-500 text-white border border-emerald-600 shadow-sm">25分 (ポモドーロ)</button>
+          <button onclick="setTimerPreset(45)" class="preset-btn px-4 py-1.5 rounded-full font-black text-xs md:text-sm bg-emerald-100 hover:bg-emerald-200 text-emerald-800 border border-emerald-300">45分 (じっくり)</button>
+        </div>
+
+        <!-- Visual Timer Display -->
+        <div class="relative w-64 h-64 md:w-72 md:h-72 mx-auto my-3 flex items-center justify-center">
+          <!-- Circular SVG Progress -->
+          <svg class="w-full h-full transform -rotate-90" viewBox="0 0 100 100">
+            <circle cx="50" cy="50" r="44" stroke="#D1FAE5" stroke-width="8" fill="none"/>
+            <circle id="timerProgressRing" cx="50" cy="50" r="44" stroke="#10B981" stroke-width="8" stroke-linecap="round" fill="none"
+                    stroke-dasharray="276.46" stroke-dashoffset="0" class="transition-all duration-300"/>
+          </svg>
+
+          <!-- Inner Content -->
+          <div class="absolute flex flex-col items-center justify-center">
+            <span id="timerMascot" class="text-4xl md:text-5xl mb-2 transition-transform duration-300">🐣</span>
+            <div id="timerDisplay" class="text-5xl md:text-6xl font-black text-slate-800 tracking-tight font-mono">
+              25:00
+            </div>
+            <span id="timerStatusLabel" class="text-xs font-bold text-emerald-600 uppercase tracking-widest mt-1 bg-emerald-100 px-3 py-0.5 rounded-full">
+              じゅんびOK
+            </span>
+          </div>
+        </div>
+
+        <!-- Timer Controls -->
+        <div class="flex items-center justify-center gap-4 mt-6 relative z-10">
+          <button id="timerToggleBtn" onclick="toggleTimer()" class="btn-3d w-36 py-3.5 bg-emerald-500 hover:bg-emerald-600 text-white font-black text-lg rounded-2xl border-2 border-emerald-600 shadow-pop-btn flex items-center justify-center gap-2">
+            <i class="fa-solid fa-play"></i>
+            <span id="timerToggleBtnText">スタート！</span>
+          </button>
+          <button onclick="resetTimer()" class="btn-3d px-5 py-3.5 bg-slate-100 hover:bg-slate-200 text-slate-600 font-black rounded-2xl border-2 border-slate-300 shadow-pop-btn" title="タイマーをリセット">
+            <i class="fa-solid fa-rotate-right text-lg"></i>
+          </button>
+        </div>
+
+        <p class="text-xs text-slate-500 font-bold mt-5">
+          💡 タイマーが0になると、集中できたごほうびとして <strong>★1つ</strong> をプレゼント！
+        </p>
+      </div>
+    </section>
+
+    <!-- ===================== SECTION 3: REWARDS SHOP ===================== -->
+    <section id="section-rewards" class="tab-section hidden space-y-6">
+      <div class="bg-gradient-to-r from-pink-100 via-rose-50 to-purple-100 rounded-3xl p-6 border-4 border-pink-200 shadow-pop flex flex-col sm:flex-row items-center justify-between gap-4">
+        <div class="flex items-center gap-3">
+          <div class="w-14 h-14 bg-pink-400 text-white rounded-2xl flex items-center justify-center text-3xl shadow-sm">
+            🎁
+          </div>
+          <div>
+            <h2 class="text-xl font-black text-pink-700">ごほうびショップ</h2>
+            <p class="text-xs md:text-sm font-bold text-slate-600">がんばってためたスターと、すきなごほうびをこうかんしよう！</p>
+          </div>
+        </div>
+
+        <div class="bg-white px-5 py-2.5 rounded-2xl border-2 border-pink-300 shadow-sm flex items-center gap-2">
+          <span class="text-xs font-bold text-slate-500">いまのスター:</span>
+          <i class="fa-solid fa-star text-amber-400 text-lg"></i>
+          <span id="shopStarCount" class="text-2xl font-black text-amber-600">0</span>
+          <span class="text-xs font-bold text-amber-700">こ</span>
+        </div>
+      </div>
+
+      <!-- Reward Grid -->
+      <div id="rewardCardsGrid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+        <!-- Dynamically injected rewards -->
+      </div>
+    </section>
+
+    <!-- ===================== SECTION 4: STATS & STREAK ===================== -->
+    <section id="section-stats" class="tab-section hidden space-y-6">
+      <!-- Top Overview Row -->
+      <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+        <!-- Total Study Time -->
+        <div class="bg-white rounded-3xl p-5 border-4 border-indigo-100 shadow-pop flex items-center gap-4">
+          <div class="w-14 h-14 rounded-2xl bg-indigo-100 text-indigo-600 flex items-center justify-center text-2xl font-black">
+            ⏱️
+          </div>
+          <div>
+            <p class="text-xs font-bold text-slate-400">これまでの合計勉強時間</p>
+            <p class="text-2xl font-black text-indigo-600"><span id="statTotalMinutes">0</span><span class="text-sm font-bold ml-1">ふん</span></p>
+          </div>
+        </div>
+
+        <!-- Total Completed Tasks -->
+        <div class="bg-white rounded-3xl p-5 border-4 border-amber-100 shadow-pop flex items-center gap-4">
+          <div class="w-14 h-14 rounded-2xl bg-amber-100 text-amber-600 flex items-center justify-center text-2xl font-black">
+            🏆
+          </div>
+          <div>
+            <p class="text-xs font-bold text-slate-400">クリアしたミッション</p>
+            <p class="text-2xl font-black text-amber-600"><span id="statTotalTasks">0</span><span class="text-sm font-bold ml-1">こ</span></p>
+          </div>
+        </div>
+
+        <!-- Best Streak -->
+        <div class="bg-white rounded-3xl p-5 border-4 border-rose-100 shadow-pop flex items-center gap-4">
+          <div class="w-14 h-14 rounded-2xl bg-rose-100 text-rose-600 flex items-center justify-center text-2xl font-black">
+            🔥
+          </div>
+          <div>
+            <p class="text-xs font-bold text-slate-400">れんぞく勉強記録</p>
+            <p class="text-2xl font-black text-rose-600"><span id="statStreakDays">0</span><span class="text-sm font-bold ml-1">にち</span></p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Weekly Progress Bar Chart -->
+      <div class="bg-white rounded-3xl p-6 border-4 border-slate-100 shadow-pop">
+        <div class="flex items-center justify-between mb-6">
+          <h3 class="font-black text-lg text-slate-800 flex items-center gap-2">
+            <i class="fa-solid fa-chart-simple text-indigo-500"></i>
+            <span>ここ7日間の勉強時間</span>
+          </h3>
+          <span class="text-xs font-bold text-slate-400">（分）</span>
+        </div>
+
+        <!-- Bar chart rendered dynamically -->
+        <div id="weeklyChartContainer" class="flex items-end justify-between h-44 pt-6 px-2 sm:px-6 border-b-2 border-slate-100 gap-2">
+          <!-- Bars dynamically filled -->
+        </div>
+      </div>
+
+      <!-- Recent History Log -->
+      <div class="bg-white rounded-3xl p-6 border-4 border-slate-100 shadow-pop">
+        <h3 class="font-black text-lg text-slate-800 mb-4 flex items-center gap-2">
+          <i class="fa-solid fa-clock-rotate-left text-teal-500"></i>
+          <span>さいきんの交換とクリア記録</span>
+        </h3>
+        <div id="activityLogList" class="space-y-2 max-h-60 overflow-y-auto pr-1 text-sm">
+          <!-- Dynamically populated activity -->
+        </div>
+      </div>
+    </section>
+
+    <!-- ===================== PARENT MODE PANEL ===================== -->
+    <div id="parentSettingsPanel" class="hidden mt-8 bg-indigo-50/80 rounded-3xl p-6 border-4 border-indigo-200">
+      <div class="flex items-center justify-between border-b-2 border-indigo-200 pb-3 mb-4">
+        <div class="flex items-center gap-2 text-indigo-900 font-black text-lg">
+          <i class="fa-solid fa-gear text-indigo-600"></i>
+          <span>保護者設定 & 管理モード</span>
+        </div>
+        <button onclick="exitParentMode()" class="text-xs font-bold bg-white text-indigo-700 px-3 py-1.5 rounded-xl border border-indigo-300 hover:bg-indigo-100">
+          設定を閉じる
+        </button>
+      </div>
+
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <!-- Add Custom Reward -->
+        <div class="bg-white p-4 rounded-2xl border border-indigo-100 shadow-sm space-y-3">
+          <h4 class="font-black text-sm text-slate-700 flex items-center gap-1.5">
+            <i class="fa-solid fa-gift text-pink-500"></i>
+            新しいごほうびの追加
+          </h4>
+          <input type="text" id="newRewardTitle" placeholder="ごほうびの名前（例: お菓子バイキング）" class="w-full text-sm font-bold border-2 border-slate-200 rounded-xl p-2 focus:outline-none focus:border-indigo-400">
+          <div class="flex gap-2">
+            <input type="number" id="newRewardCost" placeholder="必要スター数" value="5" min="1" max="100" class="w-1/2 text-sm font-bold border-2 border-slate-200 rounded-xl p-2 focus:outline-none focus:border-indigo-400">
+            <select id="newRewardIcon" class="w-1/2 text-sm font-bold border-2 border-slate-200 rounded-xl p-2 focus:outline-none focus:border-indigo-400">
+              <option value="🎮">🎮 ゲーム</option>
+              <option value="🍦">🍦 おやつ</option>
+              <option value="📺">📺 アニメ/動画</option>
+              <option value="🛹">🛹 おでかけ/公園</option>
+              <option value="📖">📖 好きなマンガ</option>
+              <option value="⭐">⭐ スペシャル</option>
+            </select>
+          </div>
+          <button onclick="addNewReward()" class="w-full bg-pink-500 hover:bg-pink-600 text-white font-black text-sm py-2 rounded-xl btn-3d shadow-pop-sm">
+            ごほうびリストに追加
+          </button>
+        </div>
+
+        <!-- Star Management & Quick Adjustment -->
+        <div class="bg-white p-4 rounded-2xl border border-indigo-100 shadow-sm space-y-3">
+          <h4 class="font-black text-sm text-slate-700 flex items-center gap-1.5">
+            <i class="fa-solid fa-star text-amber-400"></i>
+            スターの手動ちょうせい
+          </h4>
+          <p class="text-xs text-slate-500">お手伝いや特別ながんばりにボーナススターをあげたり微調整できます。</p>
+          <div class="flex items-center gap-2">
+            <button onclick="adjustStars(-1)" class="w-10 h-10 bg-slate-100 hover:bg-slate-200 text-slate-700 font-black rounded-xl text-lg">-1</button>
+            <div class="flex-1 text-center bg-amber-50 border-2 border-amber-200 rounded-xl py-1.5">
+              <span id="parentStarDisplay" class="text-xl font-black text-amber-700">0</span>
+              <span class="text-xs font-bold text-amber-800">個</span>
+            </div>
+            <button onclick="adjustStars(1)" class="w-10 h-10 bg-amber-400 hover:bg-amber-500 text-slate-900 font-black rounded-xl text-lg">+1</button>
+            <button onclick="adjustStars(5)" class="w-12 h-10 bg-amber-500 hover:bg-amber-600 text-white font-black rounded-xl text-sm">+5</button>
+          </div>
+          <div class="pt-2 border-t border-slate-100 flex justify-between items-center">
+            <span class="text-xs text-rose-500 font-bold">データ管理</span>
+            <button onclick="confirmResetAllData()" class="text-xs text-rose-600 hover:text-rose-800 underline">
+              全データを初期化
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <!-- ===================== MODAL: ADD TASK ===================== -->
+  <div id="addTaskModal" class="fixed inset-0 z-50 bg-slate-900/40 backdrop-blur-sm hidden flex items-center justify-center p-4">
+    <div class="bg-white rounded-3xl p-6 max-w-md w-full border-4 border-amber-300 shadow-2xl relative animate-scale-up">
+      <div class="flex justify-between items-center mb-4">
+        <h3 class="text-xl font-black text-slate-800 flex items-center gap-2">
+          <span>📝 あたらしいミッション</span>
+        </h3>
+        <button onclick="closeAddTaskModal()" class="w-8 h-8 rounded-full bg-slate-100 hover:bg-slate-200 flex items-center justify-center text-slate-500">
+          <i class="fa-solid fa-xmark"></i>
+        </button>
+      </div>
+
+      <div class="space-y-4">
+        <!-- Preset subjects -->
+        <div>
+          <label class="block text-xs font-black text-slate-600 mb-2">教材・教科をえらぶ：</label>
+          
+          <!-- 四谷大塚 -->
+          <div class="mb-2">
+            <span class="text-[11px] font-black text-blue-700 bg-blue-50 px-2 py-0.5 rounded-md inline-block mb-1.5">四谷大塚シリーズ</span>
+            <div class="grid grid-cols-4 gap-1.5" id="yotsuyaSubjects">
+              <button type="button" onclick="selectSubject('算数(四谷)', '📐', 'text-blue-600')" class="subject-choice py-2 px-1 rounded-xl border-2 border-slate-200 hover:border-blue-400 bg-white font-bold text-xs flex flex-col items-center gap-1">
+                <span>📐</span><span class="text-[11px]">算数(四谷)</span>
+              </button>
+              <button type="button" onclick="selectSubject('国語(四谷)', '📖', 'text-rose-600')" class="subject-choice py-2 px-1 rounded-xl border-2 border-slate-200 hover:border-blue-400 bg-white font-bold text-xs flex flex-col items-center gap-1">
+                <span>📖</span><span class="text-[11px]">国語(四谷)</span>
+              </button>
+              <button type="button" onclick="selectSubject('理科(四谷)', '🔬', 'text-emerald-600')" class="subject-choice py-2 px-1 rounded-xl border-2 border-slate-200 hover:border-blue-400 bg-white font-bold text-xs flex flex-col items-center gap-1">
+                <span>🔬</span><span class="text-[11px]">理科(四谷)</span>
+              </button>
+              <button type="button" onclick="selectSubject('社会(四谷)', '🗾', 'text-amber-600')" class="subject-choice py-2 px-1 rounded-xl border-2 border-slate-200 hover:border-blue-400 bg-white font-bold text-xs flex flex-col items-center gap-1">
+                <span>🗾</span><span class="text-[11px]">社会(四谷)</span>
+              </button>
+            </div>
+          </div>
+
+          <!-- SAPIX -->
+          <div>
+            <span class="text-[11px] font-black text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-md inline-block mb-1.5">SAPIXシリーズ</span>
+            <div class="grid grid-cols-4 gap-1.5" id="sapixSubjects">
+              <button type="button" onclick="selectSubject('算数(SAPIX)', '📐', 'text-blue-600')" class="subject-choice py-2 px-1 rounded-xl border-2 border-slate-200 hover:border-emerald-400 bg-white font-bold text-xs flex flex-col items-center gap-1">
+                <span>📐</span><span class="text-[11px]">算数(SAPIX)</span>
+              </button>
+              <button type="button" onclick="selectSubject('国語(SAPIX)', '📖', 'text-rose-600')" class="subject-choice py-2 px-1 rounded-xl border-2 border-slate-200 hover:border-emerald-400 bg-white font-bold text-xs flex flex-col items-center gap-1">
+                <span>📖</span><span class="text-[11px]">国語(SAPIX)</span>
+              </button>
+              <button type="button" onclick="selectSubject('理科(SAPIX)', '🔬', 'text-emerald-600')" class="subject-choice py-2 px-1 rounded-xl border-2 border-slate-200 hover:border-emerald-400 bg-white font-bold text-xs flex flex-col items-center gap-1">
+                <span>🔬</span><span class="text-[11px]">理科(SAPIX)</span>
+              </button>
+              <button type="button" onclick="selectSubject('社会(SAPIX)', '🗾', 'text-amber-600')" class="subject-choice py-2 px-1 rounded-xl border-2 border-slate-200 hover:border-emerald-400 bg-white font-bold text-xs flex flex-col items-center gap-1">
+                <span>🗾</span><span class="text-[11px]">社会(SAPIX)</span>
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <div>
+          <label class="block text-xs font-black text-slate-600 mb-1">ミッションのなまえ：</label>
+          <input type="text" id="taskTitleInput" placeholder="例: 予習シリーズ 第3回 練習問題" class="w-full text-base font-bold border-2 border-slate-200 rounded-2xl p-3 focus:outline-none focus:border-amber-400">
+        </div>
+        </div>
+
+        <div>
+          <label class="block text-xs font-black text-slate-600 mb-1">ミッションのなまえ：</label>
+          <input type="text" id="taskTitleInput" placeholder="例: かんじドリル 2ページ" class="w-full text-base font-bold border-2 border-slate-200 rounded-2xl p-3 focus:outline-none focus:border-amber-400">
+        </div>
+
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="block text-xs font-black text-slate-600 mb-1">時間のめやす (分)：</label>
+            <input type="number" id="taskDurationInput" value="15" min="5" step="5" class="w-full text-base font-bold border-2 border-slate-200 rounded-2xl p-3 focus:outline-none focus:border-amber-400">
+          </div>
+          <div>
+            <label class="block text-xs font-black text-slate-600 mb-1">もらえるスター：</label>
+            <input type="number" id="taskStarsInput" value="1" min="1" max="10" class="w-full text-base font-bold border-2 border-slate-200 rounded-2xl p-3 focus:outline-none focus:border-amber-400">
+          </div>
+        </div>
+
+        <button onclick="saveNewTask()" class="w-full mt-2 py-3.5 bg-amber-400 hover:bg-amber-500 text-slate-900 font-black text-base rounded-2xl border-2 border-amber-500 shadow-pop-btn btn-3d">
+          ミッションを追加する！
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===================== MODAL: PARENT PIN GATE ===================== -->
+  <div id="parentGateModal" class="fixed inset-0 z-50 bg-slate-900/40 backdrop-blur-sm hidden flex items-center justify-center p-4">
+    <div class="bg-white rounded-3xl p-6 max-w-sm w-full border-4 border-indigo-300 shadow-2xl text-center">
+      <div class="w-12 h-12 bg-indigo-100 text-indigo-600 rounded-full flex items-center justify-center text-xl mx-auto mb-3">
+        <i class="fa-solid fa-lock"></i>
+      </div>
+      <h3 class="text-lg font-black text-slate-800 mb-1">保護者認証</h3>
+      <p class="text-xs text-slate-500 mb-4">おとなの確認のために、簡単な計算をといてね：</p>
+      
+      <div id="mathChallengeBox" class="bg-slate-100 py-3 rounded-2xl text-xl font-black text-indigo-600 mb-3 tracking-widest">
+        7 × 8 = ?
+      </div>
+      <input type="number" id="parentGateAnswer" placeholder="答えを入力" class="w-full text-center text-xl font-black border-2 border-slate-200 rounded-2xl p-2.5 mb-4 focus:outline-none focus:border-indigo-400">
+      
+      <div class="flex gap-2">
+        <button onclick="closeParentGateModal()" class="w-1/2 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-600 font-bold rounded-2xl text-sm">
+          もどる
+        </button>
+        <button onclick="verifyParentGate()" class="w-1/2 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white font-black rounded-2xl text-sm btn-3d shadow-pop-sm">
+          入る
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===================== MODAL: REWARD REDEEM SUCCESS ===================== -->
+  <div id="rewardSuccessModal" class="fixed inset-0 z-50 bg-slate-900/40 backdrop-blur-sm hidden flex items-center justify-center p-4">
+    <div class="bg-white rounded-3xl p-6 max-w-sm w-full border-4 border-pink-400 shadow-2xl text-center relative">
+      <div class="text-6xl my-2 animate-bounce" id="redeemedRewardEmoji">🎮</div>
+      <h3 class="text-2xl font-black text-pink-600 mb-1">ごほうび ゲット！</h3>
+      <p class="text-sm font-bold text-slate-700" id="redeemedRewardTitle">ゲーム30分チケット</p>
+      <p class="text-xs text-slate-500 mt-2 mb-5">おうちのひとに見せてつかってね！よくがんばったね！✨</p>
+      
+      <button onclick="closeRedeemModal()" class="w-full py-3 bg-pink-500 hover:bg-pink-600 text-white font-black text-base rounded-2xl border-2 border-pink-600 shadow-pop-btn btn-3d">
+        やったー！
+      </button>
+    </div>
+  </div>
+
+  <!-- ===================== TOAST NOTIFICATION ===================== -->
+  <div id="toastMessage" class="fixed bottom-6 left-1/2 transform -translate-x-1/2 z-50 bg-slate-800 text-white px-5 py-3 rounded-2xl shadow-xl font-bold text-sm flex items-center gap-3 transition-all duration-300 opacity-0 pointer-events-none translate-y-4">
+    <span id="toastIcon">⭐</span>
+    <span id="toastText">メッセージ</span>
+  </div>
+
+  <!-- JAVASCRIPT APPLICATION LOGIC -->
+  <script>
+    /* ========================================================
+       APPLICATION STATE & LOCAL STORAGE
+    ======================================================== */
+    const STORAGE_KEY = 'STUDY_QUEST_TAITO_V2';
+
+    // Default seed state if storage is empty
+    const defaultState = {
+      stars: 10,
+      streak: 3,
+      lastActiveDate: new Date().toISOString().split('T')[0],
+      totalMinutes: 120,
+      tasks: [
+        { id: 't-1', title: '予習シリーズ 計算 1ページ', subject: '算数(四谷)', icon: '📐', duration: 15, stars: 2, completed: false, date: new Date().toISOString().split('T')[0] },
+        { id: 't-2', title: 'デイリーサピックス 漢字と言葉', subject: '国語(SAPIX)', icon: '📖', duration: 15, stars: 1, completed: true, date: new Date().toISOString().split('T')[0] },
+        { id: 't-3', title: 'デイリーステップ・コアプラス復習', subject: '理科(SAPIX)', icon: '🔬', duration: 20, stars: 2, completed: false, date: new Date().toISOString().split('T')[0] },
+        { id: 't-4', title: '演習問題集 まとめのテスト', subject: '社会(四谷)', icon: '🗾', duration: 25, stars: 3, completed: false, date: new Date().toISOString().split('T')[0] }
+      ],
+      rewards: [
+        { id: 'r-1', title: 'ゲーム 30ぷんチケット', cost: 6, icon: '🎮' },
+        { id: 'r-2', title: 'すきなおやつをえらぶ', cost: 4, icon: '🍦' },
+        { id: 'r-3', title: 'アニメ 1話みる', cost: 5, icon: '📺' },
+        { id: 'r-4', title: '公園であそぶ / おでかけ', cost: 8, icon: '🛹' },
+        { id: 'r-5', title: '好きなマンガ 1さつ', cost: 15, icon: '📖' }
+      ],
+      history: [
+        { id: 'h-1', text: '「デイリーサピックス 漢字と言葉」をクリア！', time: '今日', icon: '⭐' }
+      ],
+      dailyMinutes: {}
+    };
+
+    let appState = {};
+
+    function loadState() {
+      try {
+        const stored = localStorage.getItem(STORAGE_KEY);
+        if (stored) {
+          appState = JSON.parse(stored);
+        } else {
+          appState = JSON.parse(JSON.stringify(defaultState));
+          // Pre-fill some past 6 days data for a lively initial chart
+          const today = new Date();
+          for (let i = 6; i >= 0; i--) {
+            const d = new Date();
+            d.setDate(today.getDate() - i);
+            const dateStr = d.toISOString().split('T')[0];
+            appState.dailyMinutes[dateStr] = i === 0 ? 15 : Math.floor(Math.random() * 35) + 10;
+          }
+          saveState();
+        }
+      } catch (e) {
+        console.error("Storage error:", e);
+        appState = JSON.parse(JSON.stringify(defaultState));
+      }
+      checkStreakDaily();
+    }
+
+    function saveState() {
+      try {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(appState));
+      } catch (e) {
+        console.error("Storage save error:", e);
+      }
+      updateUI();
+    }
+
+    // Daily streak check
+    function checkStreakDaily() {
+      const todayStr = new Date().toISOString().split('T')[0];
+      if (!appState.lastActiveDate) {
+        appState.lastActiveDate = todayStr;
+        appState.streak = 1;
+        return;
+      }
+
+      if (appState.lastActiveDate !== todayStr) {
+        const lastDate = new Date(appState.lastActiveDate);
+        const currDate = new Date(todayStr);
+        const diffDays = Math.round((currDate - lastDate) / (1000 * 60 * 60 * 24));
+
+        if (diffDays === 1) {
+          // Consecutive day: will increment once they complete a task or timer today
+        } else if (diffDays > 1) {
+          // Streak broke if more than 1 day skipped
+          appState.streak = 0;
+        }
+      }
+    }
+
+    /* ========================================================
+       AUDIO SYNTHESIS (Gentle sound effects without external URLs)
+    ======================================================== */
+    const audioCtx = (window.AudioContext || window.webkitAudioContext) ? new (window.AudioContext || window.webkitAudioContext)() : null;
+
+    function playTone(freq, type = 'sine', duration = 0.15) {
+      if (!audioCtx) return;
+      try {
+        if (audioCtx.state === 'suspended') audioCtx.resume();
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+        osc.type = type;
+        osc.frequency.setValueAtTime(freq, audioCtx.currentTime);
+        gain.gain.setValueAtTime(0.12, audioCtx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + duration);
+        osc.connect(gain);
+        gain.connect(audioCtx.destination);
+        osc.start();
+        osc.stop(audioCtx.currentTime + duration);
+      } catch (err) {}
+    }
+
+    function playCelebrationFanfare() {
+      const notes = [523.25, 659.25, 783.99, 1046.50]; // C5, E5, G5, C6
+      notes.forEach((freq, idx) => {
+        setTimeout(() => playTone(freq, 'triangle', 0.25), idx * 110);
+      });
+    }
+
+    function playTimerBell() {
+      if (!audioCtx) return;
+      [880, 1174.66, 1760].forEach((freq, idx) => {
+        setTimeout(() => playTone(freq, 'sine', 0.4), idx * 180);
+      });
+    }
+
+    /* ========================================================
+       CONFETTI EFFECT
+    ======================================================== */
+    function triggerConfetti() {
+      if (typeof confetti === 'function') {
+        confetti({
+          particleCount: 75,
+          spread: 60,
+          origin: { y: 0.7 },
+          colors: ['#FFD166', '#FF6B6B', '#4ECDC4', '#A29BFE']
+        });
+      }
+    }
+
+    /* ========================================================
+       TOAST NOTIFICATIONS
+    ======================================================== */
+    let toastTimeout;
+    function showToast(message, icon = '⭐') {
+      const toast = document.getElementById('toastMessage');
+      const iconEl = document.getElementById('toastIcon');
+      const textEl = document.getElementById('toastText');
+      
+      iconEl.textContent = icon;
+      textEl.textContent = message;
+
+      toast.classList.remove('opacity-0', 'translate-y-4', 'pointer-events-none');
+      toast.classList.add('opacity-100', 'translate-y-0');
+
+      clearTimeout(toastTimeout);
+      toastTimeout = setTimeout(() => {
+        toast.classList.add('opacity-0', 'translate-y-4', 'pointer-events-none');
+        toast.classList.remove('opacity-100', 'translate-y-0');
+      }, 2500);
+    }
+
+    /* ========================================================
+       TAB SWITCHING
+    ======================================================== */
+    function switchTab(tabId) {
+      document.querySelectorAll('.tab-section').forEach(el => el.classList.add('hidden'));
+      document.querySelectorAll('.tab-btn').forEach(btn => {
+        btn.classList.remove('bg-amber-400', 'text-slate-900', 'shadow-pop-btn');
+        btn.classList.add('text-slate-600');
+      });
+
+      const targetSection = document.getElementById(`section-${tabId}`);
+      const targetBtn = document.getElementById(`tabBtn-${tabId}`);
+      if (targetSection) targetSection.classList.remove('hidden');
+      if (targetBtn) {
+        targetBtn.classList.remove('text-slate-600');
+        targetBtn.classList.add('bg-amber-400', 'text-slate-900', 'shadow-pop-btn');
+      }
+
+      if (tabId === 'stats') {
+        renderWeeklyChart();
+      }
+    }
+
+    /* ========================================================
+       RENDER: TASKS
+    ======================================================== */
+    function renderTasks() {
+      const listContainer = document.getElementById('taskListContainer');
+      const timerSelect = document.getElementById('timerTaskSelect');
+      listContainer.innerHTML = '';
+
+      // Reset timer selector options
+      const currentSelectedTimerVal = timerSelect.value;
+      timerSelect.innerHTML = '<option value="">フリー学習（じゆうに勉強）</option>';
+
+      if (appState.tasks.length === 0) {
+        listContainer.innerHTML = `
+          <div class="bg-white rounded-3xl p-8 text-center border-2 border-dashed border-slate-300">
+            <span class="text-4xl">🌱</span>
+            <p class="font-bold text-slate-500 mt-2">今日のミッションはまだありません。<br>「ミッションを追加」ボタンから登録しよう！</p>
+          </div>
+        `;
+        updateProgress();
+        return;
+      }
+
+      appState.tasks.forEach(task => {
+        // Add to timer selector if incomplete
+        if (!task.completed) {
+          const opt = document.createElement('option');
+          opt.value = task.id;
+          opt.textContent = `${task.icon} ${task.title} (${task.duration}分)`;
+          timerSelect.appendChild(opt);
+        }
+
+        // Create Task Card
+        const card = document.createElement('div');
+        const isCompleted = task.completed;
+
+        card.className = `p-4 rounded-3xl border-3 transition-all duration-200 flex items-center justify-between gap-3 ${
+          isCompleted 
+            ? 'bg-amber-50/70 border-amber-200 opacity-80' 
+            : 'bg-white border-slate-200 shadow-pop hover:border-amber-300'
+        }`;
+
+        card.innerHTML = `
+          <div class="flex items-center gap-3.5 flex-1 min-w-0">
+            <!-- Checkbox button -->
+            <button onclick="toggleTaskCompletion('${task.id}')" class="w-9 h-9 flex-shrink-0 rounded-2xl flex items-center justify-center transition-all ${
+              isCompleted 
+                ? 'bg-amber-400 text-slate-900 shadow-sm' 
+                : 'border-2 border-slate-300 bg-slate-50 hover:border-amber-400 text-transparent'
+            }">
+              <i class="fa-solid fa-check text-base"></i>
+            </button>
+
+            <!-- Subject badge & title -->
+            <div class="min-w-0 flex-1">
+              <div class="flex items-center gap-2 mb-0.5">
+                <span class="text-base">${task.icon}</span>
+                <span class="text-[11px] font-black uppercase px-2 py-0.5 rounded-full bg-slate-100 text-slate-600">${task.subject}</span>
+                <span class="text-xs text-slate-400 font-bold flex items-center gap-1">
+                  <i class="fa-regular fa-clock"></i>${task.duration}分
+                </span>
+              </div>
+              <h3 class="font-black text-sm md:text-base text-slate-800 truncate ${isCompleted ? 'line-through text-slate-400' : ''}">
+                ${task.title}
+              </h3>
+            </div>
+          </div>
+
+          <!-- Reward Stars & Actions -->
+          <div class="flex items-center gap-2 flex-shrink-0">
+            <div class="flex items-center gap-1 bg-amber-100 text-amber-800 px-2.5 py-1 rounded-xl font-black text-xs md:text-sm border border-amber-300">
+              <i class="fa-solid fa-star text-amber-400"></i>
+              <span>+${task.stars}</span>
+            </div>
+
+            <!-- Start directly in timer -->
+            ${!isCompleted ? `
+              <button onclick="startTimerWithTask('${task.id}')" class="p-2 text-emerald-600 hover:bg-emerald-50 rounded-xl" title="タイマーではかる">
+                <i class="fa-solid fa-stopwatch text-lg"></i>
+              </button>
+            ` : ''}
+
+            <!-- Delete button -->
+            <button onclick="deleteTask('${task.id}')" class="p-2 text-slate-300 hover:text-rose-500 hover:bg-rose-50 rounded-xl" title="さくじょ">
+              <i class="fa-regular fa-trash-can text-sm"></i>
+            </button>
+          </div>
+        `;
+        listContainer.appendChild(card);
+      });
+
+      timerSelect.value = currentSelectedTimerVal;
+      updateProgress();
+    }
+
+    function toggleTaskCompletion(taskId) {
+      const task = appState.tasks.find(t => t.id === taskId);
+      if (!task) return;
+
+      task.completed = !task.completed;
+
+      if (task.completed) {
+        // Award stars
+        appState.stars += task.stars;
+        playTone(600, 'sine', 0.15);
+        setTimeout(() => playTone(800, 'sine', 0.2), 120);
+        triggerConfetti();
+        showToast(`やったね！★${task.stars}こ ゲット！`, '🌟');
+
+        // Record daily study time estimate
+        recordDailyStudy(task.duration);
+
+        // Add history log
+        addHistoryLog(`「${task.title}」をクリア！ (+★${task.stars})`, '🏆');
+
+        // Check streak update
+        const todayStr = new Date().toISOString().split('T')[0];
+        if (appState.lastActiveDate !== todayStr) {
+          appState.streak += 1;
+          appState.lastActiveDate = todayStr;
+        } else if (appState.streak === 0) {
+          appState.streak = 1;
+        }
+      } else {
+        // Revoke stars gently if accidentally checked
+        appState.stars = Math.max(0, appState.stars - task.stars);
+        showToast(`ミッションをもどしました`, '↩️');
+      }
+
+      saveState();
+    }
+
+    function deleteTask(taskId) {
+      appState.tasks = appState.tasks.filter(t => t.id !== taskId);
+      saveState();
+      showToast('ミッションを削除しました', '🗑️');
+    }
+
+    function updateProgress() {
+      const total = appState.tasks.length;
+      const completed = appState.tasks.filter(t => t.id && t.completed).length;
+      const percent = total === 0 ? 0 : Math.round((completed / total) * 100);
+
+      document.getElementById('taskProgressPercent').textContent = percent;
+      document.getElementById('taskFraction').textContent = `${completed}/${total}`;
+
+      const circle = document.getElementById('progressCirclePath');
+      if (circle) {
+        circle.setAttribute('stroke-dasharray', `${percent}, 100`);
+      }
+
+      // Motivational message update
+      const msg = document.getElementById('motivationalMessage');
+      if (percent === 100 && total > 0) {
+        msg.textContent = '🎉 すごい！今日のミッションをぜんぶクリアしたよ！ハナマル満点！💮';
+      } else if (percent >= 50) {
+        msg.textContent = '🚀 いいちょうし！半分おわったよ。この調子でゴー！';
+      } else {
+        msg.textContent = '✨ 今日も一歩ずつ！すてきな冒険をはじめよう！';
+      }
+    }
+
+    /* ========================================================
+       MODAL: ADD TASK LOGIC
+    ======================================================== */
+    let selectedSubjectData = { name: '算数(四谷)', icon: '📐' };
+
+    function openAddTaskModal() {
+      document.getElementById('addTaskModal').classList.remove('hidden');
+      document.getElementById('taskTitleInput').value = '';
+      selectSubject('算数(四谷)', '📐');
+      document.getElementById('taskTitleInput').focus();
+    }
+
+    function closeAddTaskModal() {
+      document.getElementById('addTaskModal').classList.add('hidden');
+    }
+
+    function selectSubject(name, icon) {
+      selectedSubjectData = { name, icon };
+      const buttons = document.querySelectorAll('.subject-choice');
+      buttons.forEach(btn => {
+        const textSpan = btn.querySelector('span:nth-child(2)');
+        if (textSpan && textSpan.textContent.trim() === name) {
+          btn.classList.add('border-amber-400', 'bg-amber-100', 'shadow-sm');
+          btn.classList.remove('border-slate-200', 'bg-white');
+        } else {
+          btn.classList.remove('border-amber-400', 'bg-amber-100', 'shadow-sm');
+          btn.classList.add('border-slate-200', 'bg-white');
+        }
+      });
+
+      // Quick auto-fill template suggestion if title is empty
+      const titleInput = document.getElementById('taskTitleInput');
+      if (!titleInput.value.trim() || titleInput.value.includes('の学習')) {
+        titleInput.placeholder = `例: ${name} のテキスト・復習`;
+      }
+    }
+
+    function saveNewTask() {
+      const title = document.getElementById('taskTitleInput').value.trim();
+      const duration = parseInt(document.getElementById('taskDurationInput').value, 10) || 15;
+      const stars = parseInt(document.getElementById('taskStarsInput').value, 10) || 1;
+
+      if (!title) {
+        showToast('ミッションのなまえをいれてね！', '⚠️');
+        return;
+      }
+
+      const newTask = {
+        id: 't-' + Date.now(),
+        title,
+        subject: selectedSubjectData.name,
+        icon: selectedSubjectData.icon,
+        duration,
+        stars,
+        completed: false,
+        date: new Date().toISOString().split('T')[0]
+      };
+
+      appState.tasks.push(newTask);
+      saveState();
+      closeAddTaskModal();
+      showToast('あたらしいミッションを追加したよ！', '✨');
+    }
+
+    /* ========================================================
+       RENDER: REWARDS SHOP
+    ======================================================== */
+    function renderRewards() {
+      const grid = document.getElementById('rewardCardsGrid');
+      grid.innerHTML = '';
+
+      appState.rewards.forEach(reward => {
+        const canAfford = appState.stars >= reward.cost;
+        const card = document.createElement('div');
+        card.className = `bg-white rounded-3xl p-5 border-4 transition-all duration-200 flex flex-col justify-between shadow-pop ${
+          canAfford ? 'border-pink-200 hover:border-pink-300' : 'border-slate-200 opacity-70'
+        }`;
+
+        card.innerHTML = `
+          <div>
+            <div class="flex items-center justify-between mb-3">
+              <span class="text-4xl">${reward.icon}</span>
+              <span class="flex items-center gap-1 font-black text-amber-600 bg-amber-50 border border-amber-200 px-3 py-1 rounded-full text-sm">
+                <i class="fa-solid fa-star text-amber-400"></i> ${reward.cost}
+              </span>
+            </div>
+            <h3 class="font-black text-base text-slate-800 mb-1">${reward.title}</h3>
+            <p class="text-xs text-slate-400 font-bold">ごほうびチケット</p>
+          </div>
+
+          <div class="mt-5">
+            <button onclick="redeemReward('${reward.id}')" ${!canAfford ? 'disabled' : ''} class="w-full py-2.5 rounded-2xl font-black text-sm flex items-center justify-center gap-2 transition-all ${
+              canAfford 
+                ? 'bg-pink-500 hover:bg-pink-600 text-white border-2 border-pink-600 shadow-pop-btn btn-3d' 
+                : 'bg-slate-200 text-slate-400 cursor-not-allowed border-2 border-slate-300'
+            }">
+              <i class="fa-solid fa-gift"></i>
+              <span>${canAfford ? 'こうかんする！' : 'スターがたりないよ'}</span>
+            </button>
+          </div>
+        `;
+        grid.appendChild(card);
+      });
+    }
+
+    function redeemReward(rewardId) {
+      const reward = appState.rewards.find(r => r.id === rewardId);
+      if (!reward) return;
+
+      if (appState.stars < reward.cost) {
+        showToast('スターが足りないよ！勉強して貯めよう！', '⭐');
+        return;
+      }
+
+      appState.stars -= reward.cost;
+      addHistoryLog(`「${reward.title}」と交換しました`, reward.icon);
+      saveState();
+
+      // Show reward card modal with fanfare
+      playCelebrationFanfare();
+      triggerConfetti();
+
+      document.getElementById('redeemedRewardEmoji').textContent = reward.icon;
+      document.getElementById('redeemedRewardTitle').textContent = reward.title;
+      document.getElementById('rewardSuccessModal').classList.remove('hidden');
+    }
+
+    function closeRedeemModal() {
+      document.getElementById('rewardSuccessModal').classList.add('hidden');
+    }
+
+    /* ========================================================
+       STUDY TIMER LOGIC
+    ======================================================== */
+    let timerInterval = null;
+    let timerTotalSeconds = 25 * 60;
+    let timerRemainingSeconds = 25 * 60;
+    let isTimerRunning = false;
+    let currentTimerTaskId = null;
+
+    function setTimerPreset(minutes) {
+      if (isTimerRunning) {
+        if (!confirm('タイマーが動いています。リセットしてもいいですか？')) return;
+        pauseTimer();
+      }
+      timerTotalSeconds = minutes * 60;
+      timerRemainingSeconds = timerTotalSeconds;
+      updateTimerDisplay();
+
+      // UI update for preset buttons
+      document.querySelectorAll('.preset-btn').forEach(btn => {
+        btn.classList.remove('bg-emerald-500', 'text-white', 'border-emerald-600');
+        btn.classList.add('bg-emerald-100', 'text-emerald-800', 'border-emerald-300');
+      });
+      event.currentTarget.classList.add('bg-emerald-500', 'text-white', 'border-emerald-600');
+      event.currentTarget.classList.remove('bg-emerald-100', 'text-emerald-800');
+    }
+
+    function startTimerWithTask(taskId) {
+      const task = appState.tasks.find(t => t.id === taskId);
+      if (!task) return;
+
+      switchTab('timer');
+      const select = document.getElementById('timerTaskSelect');
+      select.value = taskId;
+      setTimerPreset(task.duration || 15);
+      showToast(`「${task.title}」のタイマーをセットしたよ！`, '⏱️');
+    }
+
+    function toggleTimer() {
+      if (isTimerRunning) {
+        pauseTimer();
+      } else {
+        startTimer();
+      }
+    }
+
+    function startTimer() {
+      if (timerRemainingSeconds <= 0) {
+        timerRemainingSeconds = timerTotalSeconds;
+      }
+      isTimerRunning = true;
+      document.getElementById('timerToggleBtnText').textContent = 'ストップ';
+      document.getElementById('timerToggleBtn').classList.replace('bg-emerald-500', 'bg-rose-500');
+      document.getElementById('timerToggleBtn').classList.replace('border-emerald-600', 'border-rose-600');
+      document.getElementById('timerStatusLabel').textContent = 'しゅうちゅうちゅう！🔥';
+      document.getElementById('timerMascot').textContent = '🐥';
+
+      playTone(550, 'sine', 0.1);
+
+      timerInterval = setInterval(() => {
+        timerRemainingSeconds--;
+        updateTimerDisplay();
+
+        if (timerRemainingSeconds <= 0) {
+          clearInterval(timerInterval);
+          timerFinished();
+        }
+      }, 1000);
+    }
+
+    function pauseTimer() {
+      isTimerRunning = false;
+      clearInterval(timerInterval);
+      document.getElementById('timerToggleBtnText').textContent = 'つづける';
+      document.getElementById('timerToggleBtn').classList.replace('bg-rose-500', 'bg-emerald-500');
+      document.getElementById('timerToggleBtn').classList.replace('border-rose-600', 'border-emerald-600');
+      document.getElementById('timerStatusLabel').textContent = 'ひとやすみ ☕';
+      document.getElementById('timerMascot').textContent = '🐣';
+    }
+
+    function resetTimer() {
+      pauseTimer();
+      timerRemainingSeconds = timerTotalSeconds;
+      document.getElementById('timerToggleBtnText').textContent = 'スタート！';
+      document.getElementById('timerStatusLabel').textContent = 'じゅんびOK';
+      document.getElementById('timerMascot').textContent = '🐣';
+      updateTimerDisplay();
+    }
+
+    function updateTimerDisplay() {
+      const minutes = Math.floor(timerRemainingSeconds / 60);
+      const seconds = timerRemainingSeconds % 60;
+      document.getElementById('timerDisplay').textContent = 
+        `${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
+
+      // Update circular dash offset (Circumference ~ 276.46)
+      const ring = document.getElementById('timerProgressRing');
+      const progressFraction = timerRemainingSeconds / timerTotalSeconds;
+      const offset = 276.46 * (1 - progressFraction);
+      ring.style.strokeDashoffset = offset;
+    }
+
+    function timerFinished() {
+      isTimerRunning = false;
+      playTimerBell();
+      playCelebrationFanfare();
+      triggerConfetti();
+
+      document.getElementById('timerToggleBtnText').textContent = 'スタート！';
+      document.getElementById('timerToggleBtn').classList.replace('bg-rose-500', 'bg-emerald-500');
+      document.getElementById('timerToggleBtn').classList.replace('border-rose-600', 'border-emerald-600');
+      document.getElementById('timerStatusLabel').textContent = 'たいへんよくできました！';
+      document.getElementById('timerMascot').textContent = '🦉✨';
+
+      const studiedMinutes = Math.round(timerTotalSeconds / 60);
+      recordDailyStudy(studiedMinutes);
+
+      // Reward 1 bonus star for completing the focused timer
+      appState.stars += 1;
+      showToast(`タイマー完了！集中ボーナス ★1こ 獲得！`, '🎉');
+
+      // If associated with a task, offer quick complete
+      const select = document.getElementById('timerTaskSelect');
+      const taskId = select.value;
+      if (taskId) {
+        toggleTaskCompletion(taskId);
+      }
+
+      saveState();
+    }
+
+    /* ========================================================
+       STUDY TIME & HISTORY LOGGING
+    ======================================================== */
+    function recordDailyStudy(minutes) {
+      const todayStr = new Date().toISOString().split('T')[0];
+      appState.totalMinutes = (appState.totalMinutes || 0) + minutes;
+      appState.dailyMinutes[todayStr] = (appState.dailyMinutes[todayStr] || 0) + minutes;
+    }
+
+    function addHistoryLog(text, icon = '✨') {
+      if (!appState.history) appState.history = [];
+      appState.history.unshift({
+        id: 'h-' + Date.now(),
+        text,
+        time: 'たった今',
+        icon
+      });
+      // Keep recent 20
+      if (appState.history.length > 20) {
+        appState.history.pop();
+      }
+    }
+
+    /* ========================================================
+       RENDER: STATS & WEEKLY BAR CHART
+    ======================================================== */
+    function renderStats() {
+      document.getElementById('statTotalMinutes').textContent = appState.totalMinutes || 0;
+      const completedCount = appState.tasks.filter(t => t.completed).length;
+      document.getElementById('statTotalTasks').textContent = completedCount;
+      document.getElementById('statStreakDays').textContent = appState.streak || 0;
+
+      // Activity log
+      const logContainer = document.getElementById('activityLogList');
+      logContainer.innerHTML = '';
+      if (!appState.history || appState.history.length === 0) {
+        logContainer.innerHTML = '<p class="text-slate-400 text-xs">まだ記録はありません。</p>';
+      } else {
+        appState.history.forEach(item => {
+          const row = document.createElement('div');
+          row.className = 'flex items-center justify-between p-2.5 bg-slate-50 rounded-2xl border border-slate-100';
+          row.innerHTML = `
+            <div class="flex items-center gap-2">
+              <span class="text-base">${item.icon}</span>
+              <span class="font-bold text-slate-700">${item.text}</span>
+            </div>
+            <span class="text-[11px] font-bold text-slate-400">${item.time}</span>
+          `;
+          logContainer.appendChild(row);
+        });
+      }
+    }
+
+    function renderWeeklyChart() {
+      const container = document.getElementById('weeklyChartContainer');
+      container.innerHTML = '';
+
+      const dayNames = ['日', '月', '火', '水', '木', '金', '土'];
+      const today = new Date();
+      const past7Days = [];
+
+      for (let i = 6; i >= 0; i--) {
+        const d = new Date();
+        d.setDate(today.getDate() - i);
+        const dateStr = d.toISOString().split('T')[0];
+        const minutes = appState.dailyMinutes[dateStr] || 0;
+        past7Days.push({
+          dateStr,
+          dayLabel: i === 0 ? '今日' : dayNames[d.getDay()],
+          minutes
+        });
+      }
+
+      const maxMinutes = Math.max(...past7Days.map(d => d.minutes), 60);
+
+      past7Days.forEach(day => {
+        const heightPercent = Math.max(8, Math.round((day.minutes / maxMinutes) * 100));
+        const col = document.createElement('div');
+        col.className = 'flex-1 flex flex-col items-center justify-end h-full group';
+
+        col.innerHTML = `
+          <span class="text-[10px] font-bold text-slate-400 mb-1 opacity-0 group-hover:opacity-100 transition-opacity">${day.minutes}分</span>
+          <div class="w-full max-w-[40px] bg-indigo-100 hover:bg-indigo-300 rounded-t-xl transition-all duration-300 relative flex items-end justify-center" style="height: ${heightPercent}%;">
+            <div class="w-full bg-gradient-to-t from-indigo-500 to-teal-400 rounded-t-xl" style="height: ${heightPercent}%;"></div>
+          </div>
+          <span class="text-xs font-black text-slate-600 mt-2">${day.dayLabel}</span>
+        `;
+        container.appendChild(col);
+      });
+    }
+
+    /* ========================================================
+       PARENT GATE & CONTROLS
+    ======================================================== */
+    let mathChallengeResult = 0;
+
+    function toggleParentModeModal() {
+      const panel = document.getElementById('parentSettingsPanel');
+      if (!panel.classList.contains('hidden')) {
+        panel.classList.add('hidden');
+        return;
+      }
+
+      // Generate random math challenge to verify adult
+      const n1 = Math.floor(Math.random() * 6) + 4; // 4-9
+      const n2 = Math.floor(Math.random() * 6) + 4; // 4-9
+      mathChallengeResult = n1 * n2;
+      document.getElementById('mathChallengeBox').textContent = `${n1} × ${n2} = ?`;
+      document.getElementById('parentGateAnswer').value = '';
+      document.getElementById('parentGateModal').classList.remove('hidden');
+      document.getElementById('parentGateAnswer').focus();
+    }
+
+    function closeParentGateModal() {
+      document.getElementById('parentGateModal').classList.add('hidden');
+    }
+
+    function verifyParentGate() {
+      const ans = parseInt(document.getElementById('parentGateAnswer').value, 10);
+      if (ans === mathChallengeResult) {
+        closeParentGateModal();
+        const panel = document.getElementById('parentSettingsPanel');
+        panel.classList.remove('hidden');
+        panel.scrollIntoView({ behavior: 'smooth' });
+        showToast('保護者モードをひらきました', '🛡️');
+      } else {
+        showToast('答えがちがいます。もういちど！', '❌');
+        document.getElementById('parentGateAnswer').value = '';
+      }
+    }
+
+    function exitParentMode() {
+      document.getElementById('parentSettingsPanel').classList.add('hidden');
+    }
+
+    function addNewReward() {
+      const title = document.getElementById('newRewardTitle').value.trim();
+      const cost = parseInt(document.getElementById('newRewardCost').value, 10) || 5;
+      const icon = document.getElementById('newRewardIcon').value;
+
+      if (!title) {
+        showToast('ごほうびのなまえを入れてください', '⚠️');
+        return;
+      }
+
+      appState.rewards.push({
+        id: 'r-' + Date.now(),
+        title,
+        cost,
+        icon
+      });
+
+      document.getElementById('newRewardTitle').value = '';
+      saveState();
+      showToast('ごほうびを追加しました！', '🎁');
+    }
+
+    function adjustStars(delta) {
+      appState.stars = Math.max(0, (appState.stars || 0) + delta);
+      saveState();
+      showToast(`スターを ${delta > 0 ? '+' + delta : delta} 調整しました`, '⭐');
+    }
+
+    function confirmResetAllData() {
+      // Custom double-confirm without alert/confirm blocked if avoided, but standard is modal or direct confirmation
+      if (document.getElementById('confirmResetBtn') == null) {
+        const ok = window.prompt('すべてのデータをリセットするには「リセット」と入力してください。');
+        if (ok === 'リセット') {
+          localStorage.removeItem(STORAGE_KEY);
+          location.reload();
+        }
+      }
+    }
+
+    /* ========================================================
+       TOP UI SYNCHRONIZATION
+    ======================================================== */
+    function updateUI() {
+      document.getElementById('headerStarCount').textContent = appState.stars || 0;
+      document.getElementById('headerStreakCount').textContent = appState.streak || 0;
+      document.getElementById('shopStarCount').textContent = appState.stars || 0;
+      document.getElementById('parentStarDisplay').textContent = appState.stars || 0;
+
+      renderTasks();
+      renderRewards();
+      renderStats();
+    }
+
+    // Set today Japanese formatted string
+    function initDateBanner() {
+      const now = new Date();
+      const weekDays = ['日', '月', '火', '水', '木', '金', '土'];
+      const str = `${now.getFullYear()}年 ${now.getMonth() + 1}月${now.getDate()}日 (${weekDays[now.getDay()]})`;
+      document.getElementById('todayDateStr').textContent = str;
+    }
+
+    /* ========================================================
+       INIT ON WINDOW LOAD
+    ======================================================== */
+    window.onload = function() {
+      loadState();
+      initDateBanner();
+      updateTimerDisplay();
+      updateUI();
+    };
+  </script>
+</body>
+</html>
